@@ -36,7 +36,7 @@ jobs:
       - name: Build Executable with Nuitka
         shell: bash
         env:
-          NUITKA_ANSWERS: "yes" # <--- CRITICAL: Automatically answers "Yes" to downloads like ccache/app-image
+          NUITKA_ANSWERS: "yes"
         run: |
           python -m nuitka \
             --standalone \
@@ -45,7 +45,7 @@ jobs:
             --disable-console \
             --enable-plugin=tk-inter \
             --jobs=1 \
-            --no-lto \
+            --lto=no \
             gui.py
 
       - name: Rename Binary for Clarity
