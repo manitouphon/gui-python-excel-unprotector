@@ -35,17 +35,16 @@ jobs:
 
       - name: Build Executable with Nuitka
         shell: bash
-        env:
-          NUITKA_ANSWERS: "yes"
         run: |
           python -m nuitka \
             --standalone \
             --onefile \
             --remove-output \
-            --disable-console \
+            --windows-console-mode=disable \
             --enable-plugin=tk-inter \
             --jobs=1 \
             --lto=no \
+            --assume-yes-for-downloads \
             gui.py
 
       - name: Rename Binary for Clarity
