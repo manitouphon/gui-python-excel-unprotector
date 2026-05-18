@@ -91,6 +91,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: success()
+    # CRITICAL FIX: Grants permissions to create/update releases
+    permissions:
+      contents: write
     steps:
       - name: Download all built binaries
         uses: actions/download-artifact@v4
