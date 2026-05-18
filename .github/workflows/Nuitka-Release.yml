@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: false # <--- CRITICAL: Prevents Linux failure from cancelling macOS/Windows
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
@@ -23,17 +23,17 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
 
-      # Forces the macOS/Linux runners to use the standard zlib module inside Actions instead of seeking outside python versions
       - name: Install required tools
         run: |
           python -m pip install --upgrade pip
-          pip install nuitka zstandard 
-          
+          pip install nuitka zstandard
+
       - name: Install C Compiler (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y ccache gcc
 
-      - name: Build Executable with Nuitka
+      - name: Build Executable with Nuitka (Windows)
+        if: matrix.os == 'windows-latest'
         shell: bash
         run: |
           python -m nuitka \
@@ -45,18 +45,38 @@ jobs:
             --jobs=1 \
             --lto=no \
             --assume-yes-for-downloads \
+            -o Excel-Unprotect-GUI-windows.exe \
             gui.py
 
-      - name: Rename Binary for Clarity
+      - name: Build Executable with Nuitka (macOS)
+        if: matrix.os == 'macos-latest'
         shell: bash
         run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv gui.exe Excel-Unprotect-GUI-windows.exe
-          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            mv gui.bin Excel-Unprotect-GUI-macos
-          else
-            mv gui.bin Excel-Unprotect-GUI-linux
-          fi
+          python -m nuitka \
+            --standalone \
+            --onefile \
+            --remove-output \
+            --enable-plugin=tk-inter \
+            --jobs=1 \
+            --lto=no \
+            --assume-yes-for-downloads \
+            -o Excel-Unprotect-GUI-macos \
+            gui.py
+
+      - name: Build Executable with Nuitka (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          python -m nuitka \
+            --standalone \
+            --onefile \
+            --remove-output \
+            --enable-plugin=tk-inter \
+            --jobs=1 \
+            --lto=no \
+            --assume-yes-for-downloads \
+            -o Excel-Unprotect-GUI-linux \
+            gui.py
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -70,7 +90,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: success() # Only runs if the compilation jobs succeeded
+    if: success()
     steps:
       - name: Download all built binaries
         uses: actions/download-artifact@v4
